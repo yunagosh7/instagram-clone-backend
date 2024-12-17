@@ -24,3 +24,4 @@ router.put(
 );
 
 module.exports = router;
+export {}

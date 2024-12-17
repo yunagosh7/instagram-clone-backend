@@ -1,15 +1,17 @@
+import { Request, Response } from "express";
+
 const bcrypt = require("bcrypt");
 const User = require("../Models/userModel");
 
 //dont work right now
-// const deleteUser = async (req, res) => {
+// const deleteUser = async (req: Request, res: Response) => {
 //   if (req.user.username === req.params.username || req.user.role === "admin") {
 //     res.status(200).json("User has been deleted.");
 //   } else {
 //     res.status(403).json("You are not allowed to delete this user!");
 //   }
 // };
-const updateUser = async (req, res) => {
+const updateUser = async (req: Request, res: Response) => {
   if (req.user._id === req.params.id || req.user.role === "admin") {
     if (req.body.password) {
       try {
@@ -53,7 +55,7 @@ const updateUser = async (req, res) => {
     });
   }
 };
-const getUser = async (req, res) => {
+const getUser = async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
     const user = await User.findOne({ _id: id });
@@ -73,7 +75,7 @@ const getUser = async (req, res) => {
     });
   }
 };
-const getUserByUsername = async (req, res) => {
+const getUserByUsername = async (req: Request, res: Response) => {
   try {
     const username = req.params.username;
     const user = await User.findOne({ username: username });
@@ -93,7 +95,7 @@ const getUserByUsername = async (req, res) => {
     });
   }
 };
-const getFollowings = async (req, res) => {
+const getFollowings = async (req: Request, res: Response) => {
   try {
     const username = req.params.username;
     const userfollowings = await User.findOne({ username: username });
@@ -120,7 +122,7 @@ const getFollowings = async (req, res) => {
     });
   }
 };
-const getFollowers = async (req, res) => {
+const getFollowers = async (req: Request, res: Response) => {
   try {
     const username = req.params.username;
     const userfollowers = await User.findOne({ username: username });
@@ -149,7 +151,7 @@ const getFollowers = async (req, res) => {
     });
   }
 };
-const followUser = async (req, res) => {
+const followUser = async (req: Request, res: Response) => {
   try {
     const currentUser = await User.findById({ _id: req.user._id });
     if (currentUser.username !== req.params.username) {
@@ -186,7 +188,7 @@ const followUser = async (req, res) => {
     });
   }
 };
-const unfollowUser = async (req, res) => {
+const unfollowUser = async (req: Request, res: Response) => {
   try {
     const currentUser = await User.findById({ _id: req.user._id });
     if (currentUser.username !== req.params.username) {
@@ -223,7 +225,7 @@ const unfollowUser = async (req, res) => {
     });
   }
 };
-const searchUsers = async (req, res) => {
+const searchUsers = async (req: Request, res: Response) => {
   try {
     const limit = parseInt(req.query.limit) || 5;
     const search = req.query.search || "";
@@ -257,3 +259,4 @@ module.exports = {
   searchUsers,
   getUserByUsername,
 };
+export {};

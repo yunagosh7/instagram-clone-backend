@@ -11,3 +11,4 @@ router.get("/:id", articleController.getArticle);
 router.get("/:id/like", authController.verify, articleController.likeUnlike);
 
 module.exports = router;
+export {}
