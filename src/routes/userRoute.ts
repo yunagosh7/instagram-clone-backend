@@ -1,10 +1,12 @@
-const router = require("express").Router();
-const userController = require("../controllers/userController");
-const authController = require("../controllers/authController");
+import { Router } from "express";
+import { authController } from "../controllers/authController";
+import { userController } from "../controllers/userController";
 
-router.post("/signup", authController.signup);
+const router = Router();
+
+router.post("/signup", authController.signUp);
 router.post("/login", authController.login);
-router.post("/logout", authController.logout);
+router.post("/logout", authController.logOut);
 router.post("/refresh", authController.refresh);
 router.get("/searchUser", userController.searchUsers);
 router.get("/u/:username", userController.getUserByUsername);
@@ -23,5 +25,4 @@ router.put(
   userController.unfollowUser
 );
 
-module.exports = router;
-export {}
+export default router

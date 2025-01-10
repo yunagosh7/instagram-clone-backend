@@ -10,7 +10,7 @@ const deleteUser = async (req: Request, res: Response) => {
     res.status(403).json("You are not allowed to delete this user!");
   }
 };
-const updateUser = async (req: Request, res: Response) => {
+const updateUser = async (req: Request, res: Response): Promise<any> => {
   if (String(req.user?._id) === req.params.id || req.user.role === "admin") {
     if (req.body.password) {
       try {
@@ -35,7 +35,7 @@ const updateUser = async (req: Request, res: Response) => {
           message: "you can't update this account.",
         });
       }
-      res.status(200).send({
+      return res.status(200).send({
         status: "success",
         message: "Account has been updated successfully",
         user: {
@@ -44,7 +44,7 @@ const updateUser = async (req: Request, res: Response) => {
         },
       });
     } catch (e) {
-      res.status(500).send({
+      return res.status(500).send({
         status: "failure",
         message: "something is wrong !",
       });
@@ -78,14 +78,14 @@ const getUser = async (req: Request, res: Response) => {
     });
   }
 };
-const getUserByUsername = async (req: Request, res: Response) => {
+const getUserByUsername = async (req: Request, res: Response): Promise<any> => {
   try {
     const username = req.params.username;
     const user = await userModel.findOne({ username: username });
     if (!user) {
       throw new Error("user does not exist");
     }
-    res.status(200).send({
+    return res.status(200).send({
       status: "success",
       message: "user info",
       user: {
@@ -94,7 +94,7 @@ const getUserByUsername = async (req: Request, res: Response) => {
       },
     });
   } catch (e) {
-    res.status(500).send({
+    return res.status(500).send({
       status: "failure",
       message: e.message,
     });
@@ -253,7 +253,7 @@ const searchUsers = async (req: Request, res: Response) => {
     });
   }
 };
-export {
+export const userController = {
   deleteUser,
   updateUser,
   getUser,

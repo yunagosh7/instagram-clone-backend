@@ -1,13 +1,13 @@
-const Comment = require("../Models/commentModel");
-const Article = require("../Models/articleModel");
+import { Request, Response } from "express";
+import articleModel from "../Models/articleModel";
 
-const addComment = async (req, res) => {
+
+const addComment = async (req: Request, res: Response) => {
   try {
     const { articleId, ...comment } = req.body;
     comment.user = req.user._id;
-    const commenttosave = new Comment(comment);
-    const savedcomment = await commenttosave.save();
-    await Article.findOneAndUpdate(
+    const savedcomment = await articleModel.create(comment)
+    await articleModel.findOneAndUpdate(
       { _id: articleId },
       { $push: { comment: savedcomment._id } }
     );
@@ -22,17 +22,17 @@ const addComment = async (req, res) => {
     });
   }
 };
-const getbyPostId = async (req, res) => {
-  const ArticleId = req.params.ArticleId;
+const getbyPostId = async (req: Request, res: Response) => {
+  const ArticleId = req.params.articleId;
   try {
-    const article = await Article.findOne({ _id: ArticleId }).populate(
+    const article = await articleModel.findOne({ _id: ArticleId }).populate(
       "comment"
     );
     res.status(200).send({
       status: "success",
       comments: article.comment,
     });
-  } catch (error) {
+  } catch (e) {
     res.status(500).send({
       status: "failure",
       message: e.message,
@@ -40,4 +40,4 @@ const getbyPostId = async (req, res) => {
   }
 };
 
-module.exports = { addComment, getbyPostId };
+export const commentController = { addComment, getbyPostId };

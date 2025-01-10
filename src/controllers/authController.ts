@@ -1,23 +1,23 @@
 import { NextFunction, Request, Response } from "express";
 
-const bcrypt = require("bcrypt");
-const User = require("../Models/userModel");
+import bcrypt from "bcrypt"
 import jwt from "jsonwebtoken"
 import { generateAccessToken, generateRefreshToken } from "../utils/generateToken";
 import { User } from "../interfaces/User";
+import userModel from "../Models/userModel";
 
-const signup = async (req: Request, res: Response) => {
+const signUp = async (req: Request, res: Response) => {
   try {
     const data = req.body;
     const { username, password, email } = data;
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-    const createduser = new User({
+    const createduser = {
       username: username,
       password: hashedPassword,
       email: email,
-    });
-    const saveuser = await createduser.save();
+    }
+    await userModel.create(createduser);
     res.status(200).send({
       status: "success",
       message: "user saved successfully",
@@ -32,10 +32,10 @@ const signup = async (req: Request, res: Response) => {
     });
   }
 };
-const login = async (req: Request, res: Response) => {
+const login = async (req: Request, res: Response): Promise<any> => {
   try {
     const { username, password } = req.body;
-    const user = await User.findOne({ username: username });
+    const user = await userModel.findOne({ username: username });
     if (!user) {
       return res.status(401).send({
         status: "failure",
@@ -51,14 +51,16 @@ const login = async (req: Request, res: Response) => {
     }
     const accessToken = generateAccessToken(user);
     const refreshToken = generateRefreshToken(user);
-    await User.findByIdAndUpdate(user._id, {
+    await userModel.findByIdAndUpdate(user._id, {
       jwtToken: refreshToken,
     });
-    const { jwtToken, password: newpass, ...other } = user._doc;
     res.status(200).send({
       status: "success",
       message: "logged in successfully",
-      data: other,
+      user: {
+        ...user,
+        password: undefined,
+      },
       accessToken,
       refreshToken,
     });
@@ -69,11 +71,11 @@ const login = async (req: Request, res: Response) => {
     });
   }
 };
-const logout = async (req: Request, res: Response) => {
+const logOut = async (req: Request, res: Response): Promise<any> => {
   try {
     const { refreshToken } = req.body;
     if (refreshToken) {
-      await User.updateOne({ jwtToken: refreshToken }, [
+      await userModel.updateOne({ jwtToken: refreshToken }, [
         { $unset: ["jwtToken"] },
       ]);
       res.status(200).send({
@@ -125,7 +127,7 @@ const refresh = async (req: Request, res: Response) => {
     });
   }
   try {
-    const token = await User.findOne(
+    const token = await userModel.findOne(
       { jwtToken: refreshToken },
       { jwtToken: true }
     );
@@ -144,7 +146,7 @@ const refresh = async (req: Request, res: Response) => {
         }
         const newAccessToken = generateAccessToken(user);
         const newRefreshToken = generateRefreshToken(user);
-        await User.updateOne(
+        await userModel.updateOne(
           { jwtToken: refreshToken },
           { $set: { jwtToken: newRefreshToken } }
         );
@@ -162,10 +164,10 @@ const refresh = async (req: Request, res: Response) => {
   }
 };
 
-module.exports = {
-  signup,
+export const authController = {
+  signUp,
   login,
-  logout,
+  logOut,
   verify,
   refresh,
 };

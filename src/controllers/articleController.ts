@@ -5,10 +5,10 @@ import User from "../Models/userModel";
 
 
 const createArticle = async (req: Request, res: Response) => {
-  req.body.user = req.user?._id;
-  const newArticle = new articleModel(req.body);
   try {
-    await newArticle.save();
+    req.body.user = req.user?._id;
+    const article = req.body
+    articleModel.create(article);
     res.status(200).send({
       status: "success",
       message: "article has been created",
@@ -22,9 +22,9 @@ const createArticle = async (req: Request, res: Response) => {
 };
 const updateArticle = async (req: Request, res: Response) => {
   try {
-    const article = await Article.findById(req.params.id);
-    if (req.user._id === article.user.toString()) {
-      await Article.updateOne({ $set: req.body });
+    const article = await articleModel.findById(req.params.id);
+    if (String(req.user?._id) === article.user.toString()) {
+      await articleModel.updateOne({ $set: req.body });
       res.status(200).send({
         status: "success",
         message: "article has been updated",
@@ -44,10 +44,10 @@ const updateArticle = async (req: Request, res: Response) => {
 };
 const deleteArticle = async (req: Request, res: Response) => {
   try {
-    const article = await Article.findById(req.params.id);
-    if (req.user._id === article.user.toString() || req.user.role === "admin") {
+    const article = await articleModel.findById(req.params.id);
+    if (String(req.user?._id) === article.user.toString() || req.user.role === "admin") {
       await commentModel.deleteMany({ user: req.user._id });
-      await Article.findByIdAndDelete(req.params.id);
+      await articleModel.findByIdAndDelete(req.params.id);
       res.status(200).send({
         status: "success",
         message: "article has been deleted",
@@ -71,14 +71,14 @@ const getTimeline = async (req: Request, res: Response) => {
     const page = parseInt(req.query.page as string) - 1 || 0;
     const limit = parseInt(req.query.limit as string) || 1;
     const user = await User.findById(userid).select("followings");
-    const myArticles = await Article.find({ user: userid })
+    const myArticles = await articleModel.find({ user: userid })
       .skip(page * limit)
       .limit(limit)
       .sort({ createdAt: "desc" })
       .populate("user", "username profilePicture");
     const followingsArticles = await Promise.all(
       user.followings.map((followingId) => {
-        return Article.find({
+        return articleModel.find({
           user: followingId,
           createdAt: {
             $gte: new Date(new Date().getTime() - 86400000).toISOString(),
@@ -106,7 +106,7 @@ const getTimeline = async (req: Request, res: Response) => {
 const getArticlesUser = async (req: Request, res: Response) => {
   try {
     const user = await User.findOne({ username: req.params.username });
-    const articles = await Article.find({ user: user._id });
+    const articles = await articleModel.find({ user: user._id });
     res.status(200).json(articles);
   } catch (e) {
     res.status(500).send({
@@ -117,7 +117,7 @@ const getArticlesUser = async (req: Request, res: Response) => {
 };
 const getArticle = async (req: Request, res: Response) => {
   try {
-    const article = await Article.findOne({ _id: req.params.id }).populate(
+    const article = await articleModel.findOne({ _id: req.params.id }).populate(
       "comment"
     );
     res.status(200).json(article);
@@ -130,8 +130,9 @@ const getArticle = async (req: Request, res: Response) => {
 };
 const likeUnlike = async (req: Request, res: Response) => {
   try {
-    const article = await Article.findById(req.params.id);
-    if (!article.likes.includes(req.user._id)) {
+    const article = await articleModel.findById(req.params.id) 
+    
+    if (!article.likes.includes(req.user._id) ) {
       await article.updateOne({ $push: { likes: req.user._id } });
       res.status(200).send({
         status: "success",
@@ -151,7 +152,7 @@ const likeUnlike = async (req: Request, res: Response) => {
     });
   }
 };
-module.exports = {
+export const articleController = {
   createArticle,
   updateArticle,
   deleteArticle,

@@ -1,9 +1,11 @@
-const router = require("express").Router();
-const authController = require("../controllers/authController");
-const commentController = require("../controllers/commentController");
+import { Router } from "express";
+import { authController } from "../controllers/authController";
+import { commentController } from "../controllers/commentController";
+
+const router = Router();
 
 router.post("/", authController.verify, commentController.addComment);
-router.get("/:ArticleId", commentController.getbyPostId);
+router.get("/:articleId", commentController.getbyPostId);
 
-module.exports = router;
-export {}
+
+export default router
