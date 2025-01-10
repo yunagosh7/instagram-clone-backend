@@ -28,7 +28,7 @@ const UserSchema = new mongoose.Schema({
   },
   profilePicture: {
     type: String,
-    default: "YOUR_DEFAULT_AVATAR_URL",
+    default: "https://img.freepik.com/premium-vector/user-profile-icon-flat-style-member-avatar-vector-illustration-isolated-background-human-permission-sign-business-concept_157943-15752.jpg",
   },
   followers: {
     type: Array,
@@ -47,10 +47,7 @@ const UserSchema = new mongoose.Schema({
   gender: {
     type: String,
     enum: ["male", "female"],
-  },
-  jwtToken: {
-    type: String,
-  },
+  }
 });
 
 export default mongoose.model<User & mongoose.Document>(

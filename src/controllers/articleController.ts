@@ -1,10 +1,12 @@
-const Article = require("../Models/articleModel");
-const User = require("../Models/userModel");
-const Comment = require("../Models/commentModel");
+import { Request, Response } from "express";
+import articleModel from "../Models/articleModel";
+import commentModel from "../Models/commentModel";
+import User from "../Models/userModel";
 
-const createArticle = async (req, res) => {
-  req.body.user = req.user._id;
-  const newArticle = new Article(req.body);
+
+const createArticle = async (req: Request, res: Response) => {
+  req.body.user = req.user?._id;
+  const newArticle = new articleModel(req.body);
   try {
     await newArticle.save();
     res.status(200).send({
@@ -18,7 +20,7 @@ const createArticle = async (req, res) => {
     });
   }
 };
-const updateArticle = async (req, res) => {
+const updateArticle = async (req: Request, res: Response) => {
   try {
     const article = await Article.findById(req.params.id);
     if (req.user._id === article.user.toString()) {
@@ -40,11 +42,11 @@ const updateArticle = async (req, res) => {
     });
   }
 };
-const deleteArticle = async (req, res) => {
+const deleteArticle = async (req: Request, res: Response) => {
   try {
     const article = await Article.findById(req.params.id);
     if (req.user._id === article.user.toString() || req.user.role === "admin") {
-      await Comment.deleteMany({ user: req.user._id });
+      await commentModel.deleteMany({ user: req.user._id });
       await Article.findByIdAndDelete(req.params.id);
       res.status(200).send({
         status: "success",
@@ -63,11 +65,11 @@ const deleteArticle = async (req, res) => {
     });
   }
 };
-const getTimeline = async (req, res) => {
+const getTimeline = async (req: Request, res: Response) => {
   try {
     const userid = req.user._id;
-    const page = parseInt(req.query.page) - 1 || 0;
-    const limit = parseInt(req.query.limit) || 1;
+    const page = parseInt(req.query.page as string) - 1 || 0;
+    const limit = parseInt(req.query.limit as string) || 1;
     const user = await User.findById(userid).select("followings");
     const myArticles = await Article.find({ user: userid })
       .skip(page * limit)
@@ -88,7 +90,7 @@ const getTimeline = async (req, res) => {
           .populate("user", "username profilePicture");
       })
     );
-    arr = myArticles.concat(...followingsArticles);
+    let arr = myArticles.concat(...followingsArticles);
     res.status(200).send({
       status: "success",
       Articles: arr,
@@ -101,7 +103,7 @@ const getTimeline = async (req, res) => {
     });
   }
 };
-const getArticlesUser = async (req, res) => {
+const getArticlesUser = async (req: Request, res: Response) => {
   try {
     const user = await User.findOne({ username: req.params.username });
     const articles = await Article.find({ user: user._id });
@@ -113,7 +115,7 @@ const getArticlesUser = async (req, res) => {
     });
   }
 };
-const getArticle = async (req, res) => {
+const getArticle = async (req: Request, res: Response) => {
   try {
     const article = await Article.findOne({ _id: req.params.id }).populate(
       "comment"
@@ -126,7 +128,7 @@ const getArticle = async (req, res) => {
     });
   }
 };
-const likeUnlike = async (req, res) => {
+const likeUnlike = async (req: Request, res: Response) => {
   try {
     const article = await Article.findById(req.params.id);
     if (!article.likes.includes(req.user._id)) {
@@ -142,10 +144,10 @@ const likeUnlike = async (req, res) => {
         message: "the article has been disliked",
       });
     }
-  } catch (error) {
+  } catch (er) {
     res.status(500).send({
       status: "failure",
-      message: e.message,
+      message: er.message,
     });
   }
 };

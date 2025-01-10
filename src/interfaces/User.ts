@@ -1,4 +1,7 @@
+import { Document, HydratedDocument, ObjectId } from "mongoose";
+
 export interface User {
+    _id: ObjectId;
     username: string;
     email: string;
     password: string;
@@ -10,6 +13,3 @@ export interface User {
     gender: "male" | "female";
     jwtToken: string;
 }
-
-
-

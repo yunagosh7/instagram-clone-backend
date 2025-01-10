@@ -1,6 +1,7 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
+import { Article } from "../interfaces/Article";
 
-const articleSchema = new mongoose.Schema(
+const ArticleSchema = new mongoose.Schema(
   {
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     description: { type: String, max: 500 },
@@ -11,5 +12,8 @@ const articleSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-module.exports = mongoose.model("Article", articleSchema);
-export {}
+export default mongoose.model<Article & mongoose.Document>(
+  "Article",
+  ArticleSchema,
+  "article"
+)

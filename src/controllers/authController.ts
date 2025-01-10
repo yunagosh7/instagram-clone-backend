@@ -1,9 +1,12 @@
+import { NextFunction, Request, Response } from "express";
+
 const bcrypt = require("bcrypt");
 const User = require("../Models/userModel");
-const jwt = require("jsonwebtoken");
-const generateToken = require("../utils/generateToken");
+import jwt from "jsonwebtoken"
+import { generateAccessToken, generateRefreshToken } from "../utils/generateToken";
+import { User } from "../interfaces/User";
 
-const signup = async (req, res) => {
+const signup = async (req: Request, res: Response) => {
   try {
     const data = req.body;
     const { username, password, email } = data;
@@ -29,7 +32,7 @@ const signup = async (req, res) => {
     });
   }
 };
-const login = async (req, res) => {
+const login = async (req: Request, res: Response) => {
   try {
     const { username, password } = req.body;
     const user = await User.findOne({ username: username });
@@ -46,8 +49,8 @@ const login = async (req, res) => {
         message: "password is incorrect",
       });
     }
-    const accessToken = generateToken.generateAccessToken(user);
-    const refreshToken = generateToken.generateRefreshToken(user);
+    const accessToken = generateAccessToken(user);
+    const refreshToken = generateRefreshToken(user);
     await User.findByIdAndUpdate(user._id, {
       jwtToken: refreshToken,
     });
@@ -66,7 +69,7 @@ const login = async (req, res) => {
     });
   }
 };
-const logout = async (req, res) => {
+const logout = async (req: Request, res: Response) => {
   try {
     const { refreshToken } = req.body;
     if (refreshToken) {
@@ -90,7 +93,7 @@ const logout = async (req, res) => {
     });
   }
 };
-const verify = async (req, res, next) => {
+const verify = async (req: Request, res: Response, next: NextFunction) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     res.status(403).json("You are not authorized");
@@ -98,7 +101,7 @@ const verify = async (req, res, next) => {
   const token = authHeader.split(" ")[1];
   try {
     if (authHeader) {
-      jwt.verify(token, "YOUR_SECRET_KEY", (err, user) => {
+      jwt.verify(token, "YOUR_SECRET_KEY", (err, user: User) => {
         if (err) {
           throw new Error("token is not valid!");
         }
@@ -113,7 +116,7 @@ const verify = async (req, res, next) => {
     });
   }
 };
-const refresh = async (req, res) => {
+const refresh = async (req: Request, res: Response) => {
   const refreshToken = req.body.token;
   if (!refreshToken) {
     res.status(401).send({
@@ -135,12 +138,12 @@ const refresh = async (req, res) => {
     jwt.verify(
       refreshToken,
       "YOUR_SECRETKEY_REFRESHTOKEN",
-      async (err, user) => {
+      async (err: Error, user: User) => {
         if (err) {
           throw new Error("token is not valid!");
         }
-        const newAccessToken = generateToken.generateAccessToken(user);
-        const newRefreshToken = generateToken.generateRefreshToken(user);
+        const newAccessToken = generateAccessToken(user);
+        const newRefreshToken = generateRefreshToken(user);
         await User.updateOne(
           { jwtToken: refreshToken },
           { $set: { jwtToken: newRefreshToken } }

@@ -1,17 +1,17 @@
-const jwt = require("jsonwebtoken");
+import jwt from "jsonwebtoken"
+import { User } from "../interfaces/User";
 
-const generateAccessToken = (user) => {
+export const generateAccessToken = (user: User) => {
   return jwt.sign(
     { username: user.username, role: user.role, _id: user._id },
     "mySecretKeyfromenv",
     { expiresIn: "2s" }
   );
 };
-const generateRefreshToken = (user) => {
+export const generateRefreshToken = (user: User) => {
   return jwt.sign(
     { username: user.username, role: user.role, _id: user._id },
     "myRefreshSecretKeyfromenv"
   );
 };
 
-module.exports = { generateAccessToken, generateRefreshToken };

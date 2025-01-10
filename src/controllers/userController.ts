@@ -1,18 +1,17 @@
 import { Request, Response } from "express";
+import { User } from "../interfaces/User";
 
-const bcrypt = require("bcrypt");
-const User = require("../Models/userModel");
-
-//dont work right now
-// const deleteUser = async (req: Request, res: Response) => {
-//   if (req.user.username === req.params.username || req.user.role === "admin") {
-//     res.status(200).json("User has been deleted.");
-//   } else {
-//     res.status(403).json("You are not allowed to delete this user!");
-//   }
-// };
+import bcrypt from "bcrypt";
+import userModel from "../Models/userModel";
+const deleteUser = async (req: Request, res: Response) => {
+  if (req.user.username === req.params.username || req.user.role === "admin") {
+    res.status(200).json("User has been deleted.");
+  } else {
+    res.status(403).json("You are not allowed to delete this user!");
+  }
+};
 const updateUser = async (req: Request, res: Response) => {
-  if (req.user._id === req.params.id || req.user.role === "admin") {
+  if (String(req.user?._id) === req.params.id || req.user.role === "admin") {
     if (req.body.password) {
       try {
         const salt = await bcrypt.genSalt(10);
@@ -25,12 +24,11 @@ const updateUser = async (req: Request, res: Response) => {
       }
     }
     try {
-      const user = await User.findOneAndUpdate(
+      const user = await userModel.findOneAndUpdate(
         { _id: req.params.id },
         { $set: req.body },
         { new: true }
       );
-      const { jwtToken, password, ...other } = user._doc;
       if (!user) {
         return res.status(400).send({
           status: "failure",
@@ -40,7 +38,10 @@ const updateUser = async (req: Request, res: Response) => {
       res.status(200).send({
         status: "success",
         message: "Account has been updated successfully",
-        user: other,
+        user: {
+          ...user,
+          password: undefined,
+        },
       });
     } catch (e) {
       res.status(500).send({
@@ -58,15 +59,17 @@ const updateUser = async (req: Request, res: Response) => {
 const getUser = async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
-    const user = await User.findOne({ _id: id });
+    const user = await userModel.findOne({ _id: id });
     if (!user) {
       throw new Error("user does not exist");
     }
-    const { password, jwtToken, __v, role, ...otherInfo } = user._doc;
     res.status(200).send({
       status: "success",
       message: "user info",
-      user: otherInfo,
+      user: {
+        ...user,
+        password: undefined,
+      },
     });
   } catch (e) {
     res.status(500).send({
@@ -78,15 +81,17 @@ const getUser = async (req: Request, res: Response) => {
 const getUserByUsername = async (req: Request, res: Response) => {
   try {
     const username = req.params.username;
-    const user = await User.findOne({ username: username });
+    const user = await userModel.findOne({ username: username });
     if (!user) {
       throw new Error("user does not exist");
     }
-    const { password, jwtToken, __v, role, ...otherInfo } = user._doc;
     res.status(200).send({
       status: "success",
       message: "user info",
-      user: otherInfo,
+      user: {
+        ...user,
+        password: undefined,
+      },
     });
   } catch (e) {
     res.status(500).send({
@@ -98,13 +103,13 @@ const getUserByUsername = async (req: Request, res: Response) => {
 const getFollowings = async (req: Request, res: Response) => {
   try {
     const username = req.params.username;
-    const userfollowings = await User.findOne({ username: username });
+    const userfollowings = await userModel.findOne({ username: username });
     if (!userfollowings) {
       throw new Error("user does not exist");
     }
     const followings = await Promise.all(
-      userfollowings.followings.map((following) => {
-        return User.findById(following, {
+      userfollowings.followings.map((following: User) => {
+        return userModel.findById(following, {
           username: true,
           profilePicture: true,
         });
@@ -125,13 +130,13 @@ const getFollowings = async (req: Request, res: Response) => {
 const getFollowers = async (req: Request, res: Response) => {
   try {
     const username = req.params.username;
-    const userfollowers = await User.findOne({ username: username });
+    const userfollowers = await userModel.findOne({ username: username });
     if (!userfollowers) {
       throw new Error("user does not exist");
     }
     const followers = await Promise.all(
-      userfollowers.followers.map((follower) => {
-        return User.findById(follower, {
+      userfollowers.followers.map((follower: User) => {
+        return userModel.findById(follower, {
           username: true,
           profilePicture: true,
         });
@@ -153,9 +158,9 @@ const getFollowers = async (req: Request, res: Response) => {
 };
 const followUser = async (req: Request, res: Response) => {
   try {
-    const currentUser = await User.findById({ _id: req.user._id });
+    const currentUser = await userModel.findById({ _id: req.user._id });
     if (currentUser.username !== req.params.username) {
-      const usertofollow = await User.findOne({
+      const usertofollow = await userModel.findOne({
         username: req.params.username,
       });
       if (!usertofollow) {
@@ -190,9 +195,9 @@ const followUser = async (req: Request, res: Response) => {
 };
 const unfollowUser = async (req: Request, res: Response) => {
   try {
-    const currentUser = await User.findById({ _id: req.user._id });
+    const currentUser = await userModel.findById({ _id: req.user._id });
     if (currentUser.username !== req.params.username) {
-      const usertounfollow = await User.findOne({
+      const usertounfollow = await userModel.findOne({
         username: req.params.username,
       });
       if (!usertounfollow) {
@@ -227,9 +232,9 @@ const unfollowUser = async (req: Request, res: Response) => {
 };
 const searchUsers = async (req: Request, res: Response) => {
   try {
-    const limit = parseInt(req.query.limit) || 5;
+    const limit = parseInt(req.query.limit as string) || 5;
     const search = req.query.search || "";
-    const users = await User.find({
+    const users = await userModel.find({
       username: { $regex: search, $options: "i" },
     })
       .select("_id username profilePicture")
@@ -248,7 +253,7 @@ const searchUsers = async (req: Request, res: Response) => {
     });
   }
 };
-module.exports = {
+export {
   deleteUser,
   updateUser,
   getUser,
@@ -258,5 +263,4 @@ module.exports = {
   unfollowUser,
   searchUsers,
   getUserByUsername,
-};
-export {};
+}
